@@ -6,6 +6,7 @@ import hex.genmodel.IClusteringModel;
 import hex.genmodel.PredictContributions;
 import hex.genmodel.PredictContributionsFactory;
 import hex.genmodel.algos.deepwater.DeepwaterMojoModel;
+import hex.genmodel.algos.targetencoder.TargetEncoderMojoModel;
 import hex.genmodel.algos.tree.SharedTreeMojoModel;
 import hex.genmodel.algos.glrm.GlrmMojoModel;
 import hex.genmodel.algos.deeplearning.DeeplearningMojoModel;
@@ -570,18 +571,13 @@ public class EasyPredictModelWrapper implements Serializable {
     return p;
   }
 
-  void transformWithTargetEncoding(RowData data) {
-    Map<String, Map<String, int[]>> targetEncodingMap = getTargetEncodingMap();
-    if(targetEncodingMap != null) {
-      for (Map.Entry<String, Map<String, int[]>> columnToEncodingsMap : targetEncodingMap.entrySet()) {
-        String columnName = columnToEncodingsMap.getKey();
-        String originalValue = (String) data.get(columnName);
-        Map<String, int[]> encodings = columnToEncodingsMap.getValue();
-        int[] correspondingNumAndDen = encodings.get(originalValue);
-        double calculatedFrequency = (double) correspondingNumAndDen[0] / correspondingNumAndDen[1];
-        data.put(columnName + "_te", calculatedFrequency);
-      }
-    }
+  public void transformWithTargetEncoding(RowData data) throws PredictException{
+    if (! (m instanceof TargetEncoderMojoModel))
+      throw new PredictException("Model is not of the expected type, class = " + m.getClass().getSimpleName());
+
+    TargetEncoderMojoModel targetEncoderMojoModel = (TargetEncoderMojoModel) this.m;
+    
+    targetEncoderMojoModel.transform0(data);
   }
 
   @SuppressWarnings("unused") // not used in this class directly, kept for backwards compatibility
@@ -789,10 +785,6 @@ public class EasyPredictModelWrapper implements Serializable {
   public String[] getResponseDomainValues() {
     return m.getDomainValues(m.getResponseIdx());
   }
-  
-  public Map<String, Map<String, int[]>> getTargetEncodingMap() {
-    return m.getTargetEncodingMap();
-  }
 
   /**
    * Some autoencoder thing, I'm not sure what this does.
@@ -850,7 +842,11 @@ public class EasyPredictModelWrapper implements Serializable {
       String[] domainValues = m.getDomainValues(index);
       //TODO Target Encoding changes type of the column CAT -> NUM. 
       // `m._domain` is final so we need to check which columns are in the targetEncodingMap and whether transformations were actually applied
-      boolean encodingWasApplied = getTargetEncodingMap() != null && getTargetEncodingMap().keySet().contains(dataColumnName);
+      boolean encodingWasApplied = false;
+      if(m instanceof TargetEncoderMojoModel) {
+        TargetEncoderMojoModel model = (TargetEncoderMojoModel) this.m;
+        encodingWasApplied = model._targetEncodingMap.keySet().contains(dataColumnName);
+      }
       if (domainValues == null || encodingWasApplied) { 
         // Column is either numeric or a string (for images or text)
         double value = Double.NaN;

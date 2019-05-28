@@ -42,8 +42,6 @@ public interface ModelDescriptor {
 
   double[] priorClassDist();
   
-  Map<String, Map<String, int[]>> targetEncodingMap();
-
   double[] modelClassDist();
 
   String uuid();
