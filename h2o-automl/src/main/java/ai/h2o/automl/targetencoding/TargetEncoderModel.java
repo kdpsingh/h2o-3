@@ -32,10 +32,10 @@ public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderM
     return new double[0];
   }
 
-  private static IcedHashMap<String, Map<String, TEComponents>> _targetEncodingMap;
-
-
   public static class TargetEncoderParameters extends Model.Parameters {
+
+    public IcedHashMap<String, Map<String, TEComponents>> _targetEncodingMap;
+    
     @Override
     public String algoName() {
       return "TargetEncoder";
@@ -55,7 +55,9 @@ public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderM
     public long progressUnits() {
       return 0;
     }
-
+    
+    public Boolean _withBlending = true;
+    public BlendingParams _blendingParams = new BlendingParams(10, 20);
 
     public void addTargetEncodingMap(Map<String, Frame> encodingMap) {
       IcedHashMap<String, Map<String, TEComponents>> transformedEncodingMap = new IcedHashMap<>();
@@ -78,10 +80,15 @@ public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderM
   }
 
   public static class TargetEncoderOutput extends Model.Output {
-    public TargetEncoderOutput(TargetEncoderBuilder b) { super(b); }
-
-    public transient Map<String, Map<String, int[]>> _target_encoding_map = convertEncodingMap(_targetEncodingMap); 
-
+    
+    public transient Map<String, Map<String, int[]>> _target_encoding_map;
+    public TargetEncoderParameters _teParams;
+    
+    public TargetEncoderOutput(TargetEncoderBuilder b) {
+      super(b);
+      _target_encoding_map = convertEncodingMap(b._targetEncodingMap);
+      _teParams = b._parms;
+    }
 
     @Override public ModelCategory getModelCategory() {
       return ModelCategory.TargetEncoder;

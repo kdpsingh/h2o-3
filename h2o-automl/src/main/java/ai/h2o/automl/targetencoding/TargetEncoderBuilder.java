@@ -3,9 +3,14 @@ package ai.h2o.automl.targetencoding;
 import hex.ModelBuilder;
 import hex.ModelCategory;
 import water.DKV;
+import water.util.IcedHashMap;
+
+import java.util.Map;
 
 public class TargetEncoderBuilder extends ModelBuilder<TargetEncoderModel, TargetEncoderModel.TargetEncoderParameters, TargetEncoderModel.TargetEncoderOutput> {
 
+  public transient IcedHashMap<String, Map<String, TargetEncoderModel.TEComponents>> _targetEncodingMap;
+  
   public TargetEncoderBuilder(TargetEncoderModel.TargetEncoderParameters parms) {
     super(parms);
     super.init(false);
@@ -15,6 +20,7 @@ public class TargetEncoderBuilder extends ModelBuilder<TargetEncoderModel, Targe
     @Override
     public void computeImpl() {
       // Nothing,  but later we can perform creation of encoding map here
+      _targetEncodingMap = _parms._targetEncodingMap;
       TargetEncoderModel targetEncoderModel = new TargetEncoderModel(_job._result, _parms,  new TargetEncoderModel.TargetEncoderOutput(TargetEncoderBuilder.this));
       DKV.put(targetEncoderModel);
     }
