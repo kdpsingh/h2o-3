@@ -12,8 +12,9 @@ import water.fvec.Chunk;
 import water.fvec.Frame;
 import water.util.IcedHashMap;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import static ai.h2o.automl.targetencoding.TargetEncoderFrameHelper.convertEncodingMapToMojoFormat;
 
 
 public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderModel.TargetEncoderParameters, TargetEncoderModel.TargetEncoderOutput> {
@@ -60,21 +61,7 @@ public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderM
     public BlendingParams _blendingParams = new BlendingParams(10, 20);
 
     public void addTargetEncodingMap(Map<String, Frame> encodingMap) {
-      IcedHashMap<String, Map<String, TEComponents>> transformedEncodingMap = new IcedHashMap<>();
-      Map<String, FrameToTETable> tasks = new HashMap<>();
-
-      for (Map.Entry<String, Frame> entry : encodingMap.entrySet()) {
-
-        Frame encodingsForParticularColumn = entry.getValue();
-        FrameToTETable task = new FrameToTETable().dfork(encodingsForParticularColumn);
-
-        tasks.put(entry.getKey(), task);
-      }
-
-      for (Map.Entry<String, FrameToTETable> taskEntry : tasks.entrySet()) {
-        transformedEncodingMap.put(taskEntry.getKey(), taskEntry.getValue().getResult().table);
-      }
-      _targetEncodingMap = transformedEncodingMap;
+      _targetEncodingMap = TargetEncoderFrameHelper.convertEncodingMapFromFrameToMap(encodingMap);
     }
     
   }
@@ -86,60 +73,12 @@ public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderM
     
     public TargetEncoderOutput(TargetEncoderBuilder b) {
       super(b);
-      _target_encoding_map = convertEncodingMap(b._targetEncodingMap);
+      _target_encoding_map = convertEncodingMapToMojoFormat(b._targetEncodingMap);
       _teParams = b._parms;
     }
 
     @Override public ModelCategory getModelCategory() {
       return ModelCategory.TargetEncoder;
-    }
-  }
-
-
-  public static Map<String, Map<String, int[]>> convertEncodingMap(IcedHashMap<String, Map<String, TEComponents>> em) {
-
-    IcedHashMap<String, Map<String, int[]>> transformedEncodingMap = null;
-
-      transformedEncodingMap = new IcedHashMap<>();
-      for (Map.Entry<String, Map<String, TEComponents>> entry : em.entrySet()) {
-        String columnName = entry.getKey();
-        Map<String, TEComponents> encodingsForParticularColumn = entry.getValue();
-        Map<String, int[]> encodingsForColumnMap = new HashMap<>();
-        for (Map.Entry<String, TEComponents> kv : encodingsForParticularColumn.entrySet()) {
-          encodingsForColumnMap.put(kv.getKey(), kv.getValue().getNumeratorAndDenominator());
-        }
-        transformedEncodingMap.put(columnName, encodingsForColumnMap);
-      }
-    return transformedEncodingMap;
-  }
-
-
-  static class FrameToTETable extends MRTask<FrameToTETable> {
-    IcedHashMap<String, TEComponents> table = new IcedHashMap<>();
-
-    public FrameToTETable() { }
-
-    @Override
-    public void map(Chunk[] cs) {
-      Chunk categoricalChunk = cs[0];
-      String[] domain = categoricalChunk.vec().domain();
-      int numRowsInChunk = categoricalChunk._len;
-      // Note: we don't store fold column as we need only to be able to give predictions for data which is not encoded yet. 
-      // We need folds only for the case when we applying TE to the frame which we are going to train our model on. 
-      // But this is done once and then we don't need them anymore.
-      for (int i = 0; i < numRowsInChunk; i++) {
-        int[] numeratorAndDenominator = new int[2];
-        numeratorAndDenominator[0] = (int) cs[1].at8(i);
-        numeratorAndDenominator[1] = (int) cs[2].at8(i);
-        int factor = (int) categoricalChunk.at8(i);
-        String factorName = domain[factor];
-        table.put(factorName, new TEComponents(numeratorAndDenominator));
-      }
-    }
-
-    @Override
-    public void reduce(FrameToTETable mrt) {
-      table.putAll(mrt.table);
     }
   }
 
