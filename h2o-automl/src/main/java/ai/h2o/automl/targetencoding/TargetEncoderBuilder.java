@@ -3,13 +3,15 @@ package ai.h2o.automl.targetencoding;
 import hex.ModelBuilder;
 import hex.ModelCategory;
 import water.DKV;
-import water.util.IcedHashMap;
+import water.Scope;
+import water.fvec.Frame;
+import water.util.TwoDimTable;
 
 import java.util.Map;
 
 public class TargetEncoderBuilder extends ModelBuilder<TargetEncoderModel, TargetEncoderModel.TargetEncoderParameters, TargetEncoderModel.TargetEncoderOutput> {
 
-  public transient IcedHashMap<String, Map<String, TargetEncoderModel.TEComponents>> _targetEncodingMap;
+  public transient Map<String, Frame> _targetEncodingMap;
   
   public TargetEncoderBuilder(TargetEncoderModel.TargetEncoderParameters parms) {
     super(parms);
@@ -19,16 +21,22 @@ public class TargetEncoderBuilder extends ModelBuilder<TargetEncoderModel, Targe
   private class TargetEncoderDriver extends Driver {
     @Override
     public void computeImpl() {
-      // Nothing,  but later we can perform creation of encoding map here
-      _targetEncodingMap = _parms._targetEncodingMap;
-      TargetEncoderModel targetEncoderModel = new TargetEncoderModel(_job._result, _parms,  new TargetEncoderModel.TargetEncoderOutput(TargetEncoderBuilder.this));
+      
+      TargetEncoder tec = new TargetEncoder(_parms._columnNamesToEncode, _parms._blendingParams);
+
+      _targetEncodingMap = tec.prepareEncodingMap(_parms.train(), _parms._response_column, _parms._teFoldColumnName);
+
+      for(Map.Entry<String, Frame> entry: _targetEncodingMap.entrySet()) {
+        Scope.untrack(entry.getValue().keys());
+      }
+      
+      TargetEncoderModel targetEncoderModel = new TargetEncoderModel(_job._result, _parms,  new TargetEncoderModel.TargetEncoderOutput(TargetEncoderBuilder.this), tec);
       DKV.put(targetEncoderModel);
     }
   }
   
   @Override
   protected Driver trainModelImpl() {
-    // We can use Model.Parameters to configure Target Encoder
     return new TargetEncoderDriver();
   }
   
@@ -40,5 +48,15 @@ public class TargetEncoderBuilder extends ModelBuilder<TargetEncoderModel, Targe
   @Override
   public boolean isSupervised() {
     return true;
+  }
+
+  public static void printOutFrameAsTable(Frame fr) {
+    printOutFrameAsTable(fr, false, fr.numRows());
+  }
+
+  public static void printOutFrameAsTable(Frame fr, boolean rollups, long limit) {
+    assert limit <= Integer.MAX_VALUE;
+    TwoDimTable twoDimTable = fr.toTwoDimTable(0, (int) limit, rollups);
+    System.out.println(twoDimTable.toString(2, true));
   }
 }
