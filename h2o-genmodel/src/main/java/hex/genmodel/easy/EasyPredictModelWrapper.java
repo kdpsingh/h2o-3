@@ -844,7 +844,7 @@ public class EasyPredictModelWrapper implements Serializable {
       boolean encodingWasApplied = false;
       if(m instanceof TargetEncoderMojoModel) {
         TargetEncoderMojoModel model = (TargetEncoderMojoModel) this.m;
-        encodingWasApplied = model._targetEncodingMap.keySet().contains(dataColumnName);
+        encodingWasApplied = model._targetEncodingMap.containsKey(dataColumnName);
       }
       if (domainValues == null || encodingWasApplied) { 
         // Column is either numeric or a string (for images or text)
