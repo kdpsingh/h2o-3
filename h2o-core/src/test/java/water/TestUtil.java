@@ -1031,6 +1031,7 @@ public class TestUtil extends Iced {
     Vec vec = frame.vec(columnName);
     frame.replace(frame.find(columnName), vec.toCategoricalVec());
     vec.remove();
+    DKV.put(frame);
     return frame;
   }
 

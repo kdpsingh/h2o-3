@@ -24,10 +24,13 @@ public class TargetEncoderBuilder extends ModelBuilder<TargetEncoderModel, Targe
       
       TargetEncoder tec = new TargetEncoder(_parms._columnNamesToEncode, _parms._blendingParams);
 
-      _targetEncodingMap = tec.prepareEncodingMap(_parms.train(), _parms._response_column, _parms._teFoldColumnName);
+      Scope.untrack(train().keys());
+      
+      _targetEncodingMap = tec.prepareEncodingMap(train(), _parms._response_column, _parms._teFoldColumnName);
 
       for(Map.Entry<String, Frame> entry: _targetEncodingMap.entrySet()) {
-        Scope.untrack(entry.getValue().keys());
+        Frame frameWithEncodingMap = entry.getValue();
+        Scope.untrack(frameWithEncodingMap.keys());
       }
       
       TargetEncoderModel targetEncoderModel = new TargetEncoderModel(_job._result, _parms,  new TargetEncoderModel.TargetEncoderOutput(TargetEncoderBuilder.this), tec);
@@ -48,15 +51,5 @@ public class TargetEncoderBuilder extends ModelBuilder<TargetEncoderModel, Targe
   @Override
   public boolean isSupervised() {
     return true;
-  }
-
-  public static void printOutFrameAsTable(Frame fr) {
-    printOutFrameAsTable(fr, false, fr.numRows());
-  }
-
-  public static void printOutFrameAsTable(Frame fr, boolean rollups, long limit) {
-    assert limit <= Integer.MAX_VALUE;
-    TwoDimTable twoDimTable = fr.toTwoDimTable(0, (int) limit, rollups);
-    System.out.println(twoDimTable.toString(2, true));
   }
 }
