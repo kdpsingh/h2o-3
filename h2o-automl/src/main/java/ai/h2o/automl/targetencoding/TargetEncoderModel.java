@@ -70,8 +70,7 @@ public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderM
   }
 
   /**
-   * Transform with noise
-   */
+   * Transform with noise */
   public Frame transform(Frame data, byte strategy, double noiseLevel, long seed){
     return _targetEncoder.applyTargetEncoding(data, _parms._response_column, this._output._target_encoding_map, strategy,
             _parms._teFoldColumnName, _parms._withBlending, noiseLevel, true, seed);
