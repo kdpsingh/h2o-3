@@ -4,10 +4,6 @@ import hex.ModelCategory;
 import hex.genmodel.descriptor.Table;
 import hex.genmodel.descriptor.VariableImportances;
 
-import java.io.Serializable;
-
-import java.util.Map;
-
 public interface ModelDescriptor {
 
   String[][] scoringDomains();

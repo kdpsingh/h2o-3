@@ -192,10 +192,6 @@ public class TargetEncoderBuilderTest extends TestUtil {
     for (Map.Entry<String, Frame> entry : targetEncodingMapFromBuilder.entrySet()) {
       String teColumn = entry.getKey();
       Frame correspondingEncodingFrameFromTargetEncoder = encodingMapFromTargetEncoder.get(teColumn);
-      System.out.println("Encoding map/frame from TargetEncoderBuilder");
-      printOutFrameAsTable(entry.getValue(), false, 100);
-      System.out.println("Encoding map/frame from TargetEncoder");
-      printOutFrameAsTable(correspondingEncodingFrameFromTargetEncoder, false, 100);
       assertTrue(isBitIdentical(entry.getValue(), correspondingEncodingFrameFromTargetEncoder));
     }
   }

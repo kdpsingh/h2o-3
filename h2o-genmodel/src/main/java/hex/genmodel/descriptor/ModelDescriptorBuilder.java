@@ -5,7 +5,6 @@ import hex.genmodel.ModelDescriptor;
 import hex.genmodel.MojoModel;
 
 import java.util.Arrays;
-import java.util.Map;
 
 public class ModelDescriptorBuilder {
     // Mandatory
@@ -27,7 +26,6 @@ public class ModelDescriptorBuilder {
     // Optional
     private VariableImportances _variableImportances = null;
     private Table _modelSummary = null;
-    private Map<String, Map<String, int[]>> _target_encoding_map = null;
 
     public ModelDescriptorBuilder(final MojoModel mojoModel) {
         _category = mojoModel._category;
