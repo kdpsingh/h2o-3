@@ -5,10 +5,11 @@ import hex.ModelCategory;
 import hex.ModelMetrics;
 import hex.ModelMojoWriter;
 import water.H2O;
-import water.Iced;
 import water.Key;
 import water.fvec.Frame;
+import water.util.ArrayUtils;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderModel.TargetEncoderParameters, TargetEncoderModel.TargetEncoderOutput> {
@@ -19,7 +20,7 @@ public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderM
     super(selfKey, parms, output);
     _targetEncoder = tec;
   }
-
+  
   @Override
   public ModelMetrics.MetricBuilder makeMetricBuilder(String[] domain) {
     throw H2O.unimpl("No Model Metrics for TargetEncoder.");
@@ -57,11 +58,29 @@ public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderM
     
     public transient Map<String, Frame> _target_encoding_map;
     public TargetEncoderParameters _teParams;
+    public transient Map<String, Integer> _teColumnNameToIdx = new HashMap<>();
     
     public TargetEncoderOutput(TargetEncoderBuilder b) {
       super(b);
       _target_encoding_map = b._targetEncodingMap;
       _teParams = b._parms;
+
+      _teColumnNameToIdx = createColumnNameToIndexMap( _teParams);
+    }
+    
+    private Map<String, Integer> createColumnNameToIndexMap(TargetEncoderParameters teParams) {
+      Map<String, Integer> teColumnNameToIdx = new HashMap<>();
+      String[] names = teParams.train().names().clone();
+      String[] features = ArrayUtils.remove(names, teParams._response_column);
+      for(String teColumn : teParams._columnNamesToEncode) {
+        teColumnNameToIdx.put(teColumn, ArrayUtils.find(features, teColumn)); 
+      }
+      return teColumnNameToIdx;
+    }
+
+    @Override
+    public int nfeatures() {
+      return super.nfeatures() - (_teParams._teFoldColumnName == null ? 0 : 1);
     }
 
     @Override public ModelCategory getModelCategory() {
@@ -92,18 +111,7 @@ public class TargetEncoderModel extends Model<TargetEncoderModel, TargetEncoderM
   public ModelMojoWriter getMojo() {
     return new TargetEncoderMojoWriter(this);
   }
-
-  /**
-   * Container for numerator and denominator that are being used for calculation of target encodings.
-   */
-  public static class TEComponents extends Iced<TEComponents> {
-    private int[] _numeratorAndDenominator;
-    public TEComponents(int[] numeratorAndDenominator) {
-      _numeratorAndDenominator = numeratorAndDenominator;
-    }
-
-    public int[] getNumeratorAndDenominator() {
-      return _numeratorAndDenominator;
-    }
-  }
+  
+  
+  
 }

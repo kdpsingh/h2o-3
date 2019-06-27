@@ -33,6 +33,7 @@ public class TargetEncoderBuilder extends ModelBuilder<TargetEncoderModel, Targe
         Scope.untrack(frameWithEncodingMap.keys());
       }
       
+      assert _parms._ignore_const_cols == false : "We don't want to ignore any columns during target encoding transformation.";
       TargetEncoderModel targetEncoderModel = new TargetEncoderModel(_job._result, _parms,  new TargetEncoderModel.TargetEncoderOutput(TargetEncoderBuilder.this), tec);
       DKV.put(targetEncoderModel);
     }
