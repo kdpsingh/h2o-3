@@ -5,7 +5,9 @@ import water.fvec.Chunk;
 import water.util.IcedHashMap;
 
 public class FrameToTETableTask extends MRTask<FrameToTETableTask> {
-  public IcedHashMap<Integer, TEComponents> _table = new IcedHashMap<>();
+  
+  // IcedHashMap does not support integer keys so we will store indices as strings.
+  public IcedHashMap<String, TEComponents> _table = new IcedHashMap<>();
 
   
   public FrameToTETableTask() { }
@@ -23,7 +25,7 @@ public class FrameToTETableTask extends MRTask<FrameToTETableTask> {
       numeratorAndDenominator[0] = (int) cs[1].at8(i);
       numeratorAndDenominator[1] = (int) cs[2].at8(i);
       int factor = (int) categoricalChunk.at8(i);
-      _table.put(factor, new TEComponents(numeratorAndDenominator[0], numeratorAndDenominator[1]));
+      _table.put(Integer.toString(factor), new TEComponents(numeratorAndDenominator[0], numeratorAndDenominator[1]));
     }
   }
 
